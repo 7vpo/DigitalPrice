@@ -1,0 +1,65 @@
+---
+name: +ACI-DigitalPrice+ACI-
+suites:
+- +ACI-precise+ACI-
+architectures:
+- +ACI-amd64+ACI-
+packages:
+- +ACI-mingw-w64+ACI-
+- +ACI-gmingw-w64+ACI-
+- +ACI-git-core+ACI-
+- +ACI-unzip+ACI-
+- +ACI-nsis+ACI-
+- +ACI-faketime+ACI-
+reference+AF8-datetime: +ACI-2011-01-30 00:00:00+ACI-
+remotes:
+- +ACI-url+ACI-: +ACI-https://github.com/DigitalPrice-project/DigitalPrice.git+ACI-
+  +ACI-dir+ACI-: +ACI-DigitalPrice+ACI-
+files:
+- +ACI-qt-win32-4.8.3-gitian-r4.zip+ACI-
+- +ACI-boost-win32-1.55.0-gitian-r6.zip+ACI-
+- +ACI-bitcoin-deps-win32-gitian-r9.zip+ACI-
+script: +AHw-
+  +ACM-
+  STAGING+AD0AJA-HOME/staging
+  HOST+AD0-i686-w64-mingw32
+  +ACM-
+  mkdir -p +ACQ-STAGING
+  cd +ACQ-STAGING
+  unzip ../build/qt-win32-4.8.3-gitian-r4.zip
+  unzip ../build/boost-win32-1.55.0-gitian-r6.zip
+  unzip ../build/bitcoin-deps-win32-gitian-r9.zip
+  cd +ACQ-HOME/build/
+  +ACM-
+  cd DigitalPrice
+  export PATH+AD0AJA-STAGING/host/bin:+ACQ-PATH
+  mkdir -p +ACQ-OUTDIR/src
+  git archive HEAD +AHw- tar -x -C +ACQ-OUTDIR/src
+  cp +ACQ-OUTDIR/src/doc/README+AF8-windows.txt +ACQ-OUTDIR/readme.txt
+  cp +ACQ-OUTDIR/src/COPYING +ACQ-OUTDIR/COPYING.txt
+  export LD+AF8-PRELOAD+AD0-/usr/lib/faketime/libfaketime.so.1
+  export FAKETIME+AD0AJA-REFERENCE+AF8-DATETIME
+  export TZ+AD0-UTC
+  ln -s +ACQ-STAGING +ACQ-HOME/qt
+  +ACQ-HOME/staging/host/bin/qmake -spec unsupported/win32-gcross MINIUPNPC+AF8-LIB+AF8-PATH+AD0AJA-STAGING MINIUPNPC+AF8-INCLUDE+AF8-PATH+AD0AJA-STAGING BDB+AF8-LIB+AF8-PATH+AD0AJA-STAGING BDB+AF8-INCLUDE+AF8-PATH+AD0AJA-STAGING BOOST+AF8-LIB+AF8-PATH+AD0AJA-STAGING BOOST+AF8-INCLUDE+AF8-PATH+AD0AJA-STAGING BOOST+AF8-LIB+AF8-SUFFIX+AD0--mt-s BOOST+AF8-THREAD+AF8-LIB+AF8-SUFFIX+AD0AXw-win32-mt-s OPENSSL+AF8-LIB+AF8-PATH+AD0AJA-STAGING OPENSSL+AF8-INCLUDE+AF8-PATH+AD0AJA-STAGING QRENCODE+AF8-LIB+AF8-PATH+AD0AJA-STAGING QRENCODE+AF8-INCLUDE+AF8-PATH+AD0AJA-STAGING USE+AF8-QRCODE+AD0-1 INCLUDEPATH+AD0AJA-STAGING DEFINES+AD0-BOOST+AF8-THREAD+AF8-USE+AF8-LIB BITCOIN+AF8-NEED+AF8-QT+AF8-PLUGINS+AD0-1 QMAKE+AF8-LRELEASE+AD0-lrelease QMAKE+AF8-CXXFLAGS+AD0--frandom-seed+AD0-DigitalPrice USE+AF8-BUILD+AF8-INFO+AD0-1 USE+AF8-SSE2+AD0-1
+  make +ACQ-MAKEOPTS
+  +ACQ-HOST-strip release/DigitalPrice-qt.exe
+  cp release/DigitalPrice-qt.exe +ACQ-OUTDIR/
+  +ACM-
+  cd src
+  export LD+AF8-PRELOAD+AD0-/usr/lib/faketime/libfaketime.so.1
+  export FAKETIME+AD0AJA-REFERENCE+AF8-DATETIME
+  export TZ+AD0-UTC
+  make -f makefile.linux-mingw +ACQ-MAKEOPTS DEPSDIR+AD0AJA-STAGING DigitalPriced.exe USE+AF8-UPNP+AD0-0 DEBUGFLAGS+AD0AIg--frandom-seed+AD0-DigitalPrice+ACI- USE+AF8-SSE2+AD0-1
+  +ACQ-HOST-strip DigitalPriced.exe
+  mkdir +ACQ-OUTDIR/daemon
+  cp DigitalPriced.exe +ACQ-OUTDIR/daemon
+  cd ..
+  mkdir nsis
+  git archive HEAD +AHw- tar -x -C nsis
+  cd nsis/src
+  mkdir ../release
+  cp ../../release/+ACo- ../release/
+  cp ../../src/+ACo-.exe .
+  makensis ../share/setup.nsi
+  cp ../share/DigitalPrice-+ACo--win32-setup.exe +ACQ-OUTDIR/

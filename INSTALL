@@ -1,0 +1,9 @@
+Building DigitalPrice
+
+See doc/readme-qt.rst for instructions on building DigitalPrice-Qt,
+the intended-for-end-users, nice-graphical-interface, reference
+implementation of DigitalPrice.
+
+See doc/build-*.txt for instructions on building DigitalPriced,
+the intended-for-services, no-graphical-interface, reference
+implementation of DigitalPrice.
