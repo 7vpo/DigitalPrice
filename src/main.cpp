@@ -1398,7 +1398,7 @@ unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlock
 
 unsigned int static GetNextWorkRequired_V2(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
-        static const int64 BlocksTargetSpacing = 2.5 * 60; // 2.5 minutes
+        static const int64 BlocksTargetSpacing = 5 * 60; // 2.5 minutes
         static const unsigned int TimeDaySeconds = 60 * 60 * 24;
         int64 PastSecondsMin = TimeDaySeconds * 0.025;
         int64 PastSecondsMax = TimeDaySeconds * 7;
@@ -4619,7 +4619,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             // Prioritize by fee once past the priority size or we run out of high-priority
             // transactions:
             if (!fSortedByFee &&
-                ((nBlockSize + nTxSize >= nBlockPrioritySize) || (dPriority < COIN * 576 / 250)))
+                ((nBlockSize + nTxSize >= nBlockPrioritySize) || (dPriority < COIN * 288 / 250)))
             {
                 fSortedByFee = true;
                 comparer = TxPriorityCompare(fSortedByFee);
