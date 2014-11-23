@@ -1094,15 +1094,15 @@ int64 nSubsidy = 0;
         if (nSubsidy < 8) nSubsidy = 8;
     } else { // CPU mining calc
      nSubsidy = (11111.0 / (pow((dDiff+51.0)/6.0,2.0)));
-        if (nSubsidy > 800) nSubsidy = 800;
+        if (nSubsidy > 200) nSubsidy = 200;
         if (nSubsidy < 50) nSubsidy = 50;
     }
 
     // printf("height %u diff %4.2f reward %i \n", nHeight, dDiff, nSubsidy);
     nSubsidy *= COIN;
 
-    // yearly decline of production by 7% per year, projected 21.3M coins max by year 2050.
-    for(int i = 210240; i <= nHeight; i += 210240) nSubsidy *= 0.93;
+    // yearly decline of production by 9% per year, projected 18.5M coins max by year 2050.
+    for(int i = 210240; i <= nHeight; i += 210240) nSubsidy *= 0.91;
 
     return nSubsidy + nFees;
 }
