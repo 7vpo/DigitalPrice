@@ -300,6 +300,7 @@ int main(int argc, char *argv[])
             Shutdown();
             return 1;
         }
+
     } catch (std::exception& e) {
         handleRunawayException(&e);
     } catch (...) {
