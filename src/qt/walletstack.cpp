@@ -33,7 +33,6 @@ bool WalletStack::addWallet(const QString& name, WalletModel *walletModel)
     walletView->setBitcoinGUI(gui);
     walletView->setClientModel(clientModel);
     walletView->setWalletModel(walletModel);
-    walletView->showOutOfSyncWarning(bOutOfSync);
     addWidget(walletView);
     mapWalletViews[name] = walletView;
 
@@ -67,13 +66,6 @@ bool WalletStack::handleURI(const QString &uri)
     return walletView->handleURI(uri);
 }
 
-void WalletStack::showOutOfSyncWarning(bool fShow)
-{
-    bOutOfSync = fShow;
-    QMap<QString, WalletView*>::const_iterator i;
-    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
-        i.value()->showOutOfSyncWarning(fShow);
-}
 
 void WalletStack::gotoOverviewPage()
 {

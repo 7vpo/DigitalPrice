@@ -23,14 +23,17 @@ bool static ApplyProxySettings()
         nSocksVersion = 0;
         return false;
     }
-    if (nSocksVersion && !addrProxy.IsValid())
+    if (nSocksVersion && !addrProxy.IsValid()){
         return false;
-    if (!IsLimited(NET_IPV4))
+    }
+    if (!IsLimited(NET_IPV4)){
         SetProxy(NET_IPV4, addrProxy, nSocksVersion);
+    }
     if (nSocksVersion > 4) {
 #ifdef USE_IPV6
-        if (!IsLimited(NET_IPV6))
+        if (!IsLimited(NET_IPV6)){
             SetProxy(NET_IPV6, addrProxy, nSocksVersion);
+        }
 #endif
         SetNameProxy(addrProxy, nSocksVersion);
     }
@@ -54,10 +57,12 @@ void OptionsModel::Init()
     // command-line options to override the GUI settings:
     if (settings.contains("fUseUPnP"))
         SoftSetBoolArg("-upnp", settings.value("fUseUPnP").toBool());
-    if (settings.contains("addrProxy") && settings.value("fUseProxy").toBool())
+    if (settings.contains("addrProxy") && settings.value("fUseProxy").toBool()){
         SoftSetArg("-proxy", settings.value("addrProxy").toString().toStdString());
-    if (settings.contains("nSocksVersion") && settings.value("fUseProxy").toBool())
+    }
+    if (settings.contains("nSocksVersion") && settings.value("fUseProxy").toBool()){
         SoftSetArg("-socks", settings.value("nSocksVersion").toString().toStdString());
+    }
     if (!language.isEmpty())
         SoftSetArg("-lang", language.toStdString());
 }
@@ -110,7 +115,7 @@ bool OptionsModel::Upgrade()
         bool value = false;
         if (walletdb.ReadSetting(key.toStdString(), value))
         {
-            settings.setValue(key, value);
+            settings.setValue(key, value);;
             walletdb.EraseSetting(key.toStdString());
         }
     }

@@ -51,8 +51,6 @@ public:
 
     bool handleURI(const QString &uri);
 
-    void showOutOfSyncWarning(bool fShow);
-
 private:
     BitcoinGUI *gui;
     ClientModel *clientModel;

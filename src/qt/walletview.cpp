@@ -84,6 +84,9 @@ WalletView::WalletView(QWidget *parent, BitcoinGUI *_gui):
     connect(exportButton, SIGNAL(clicked()), transactionView, SLOT(exportClicked()));
 
     gotoOverviewPage();
+
+    overviewPage->getBitCoinsGUI(gui);
+    gui->changeBackgroundImage(0);
 }
 
 WalletView::~WalletView()
@@ -212,11 +215,6 @@ bool WalletView::handleURI(const QString& strURI)
     }
     else
         return false;
-}
-
-void WalletView::showOutOfSyncWarning(bool fShow)
-{
-    overviewPage->showOutOfSyncWarning(fShow);
 }
 
 void WalletView::setEncryptionStatus()

@@ -25,6 +25,8 @@
 #include "ui_interface.h"
 #include "wallet.h"
 #include "init.h"
+#include "time.h"
+
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -54,6 +56,8 @@
 #include <QListWidget>
 
 #include <iostream>
+#include <QFile>
+#include <QTextStream>
 
 const QString BitcoinGUI::DEFAULT_WALLET = "~Default";
 
@@ -88,8 +92,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
     // Needs walletFrame to be initialized
     createActions();
 
-    // Create application menu bar
-    createMenuBar();
+    // Create menu header
+    createHeader();
 
     // Create the toolbars
     createToolBars();
@@ -103,20 +107,23 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
     // Status bar notification icons
     QFrame *frameBlocks = new QFrame();
     frameBlocks->setContentsMargins(0,0,0,0);
-    frameBlocks->setMinimumWidth(56);
-    frameBlocks->setMaximumWidth(56);
+    frameBlocks->setMinimumWidth(160);
+    frameBlocks->setMaximumWidth(160);
     QHBoxLayout *frameBlocksLayout = new QHBoxLayout(frameBlocks);
     frameBlocksLayout->setContentsMargins(3,0,3,0);
     frameBlocksLayout->setSpacing(3);
     labelEncryptionIcon = new QLabel();
     labelConnectionsIcon = new QLabel();
     labelBlocksIcon = new QLabel();
+    labelVPNIcon = new QLabel();
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelEncryptionIcon);
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelConnectionsIcon);
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelBlocksIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelVPNIcon);
     frameBlocksLayout->addStretch();
 
     // Progress bar and label for blocks download
@@ -135,6 +142,15 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
         progressBar->setStyleSheet("QProgressBar { background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #FF8000, stop: 1 orange); border-radius: 7px; margin: 0px; }");
     }
 
+    QWidget *statusBarInfoWidget = new QWidget();
+    statusBarInfoWidget->setMinimumWidth(338);
+    statusBarInfoWidget->setMaximumWidth(338);
+    statusBarInfoWidget->setMinimumHeight(24);
+    statusBarInfoWidget->setMaximumHeight(24);
+    statusBarInfoWidget->setStyleSheet("QWidget {background: transparent; background-image: url(:icons/footertext) top center no-repeat; border-color: white}");
+
+    statusBar()->setStyleSheet("QStatusBar {background: white;}");
+    statusBar()->addWidget(statusBarInfoWidget);
     statusBar()->addWidget(progressBarLabel);
     statusBar()->addWidget(progressBar);
     statusBar()->addPermanentWidget(frameBlocks);
@@ -149,6 +165,11 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
 
     // Initially wallet actions should be disabled
     setWalletActionsEnabled(false);
+
+    controlVPN();
+
+    setWindowFlags( (windowFlags() | Qt::CustomizeWindowHint) & ~Qt::WindowMaximizeButtonHint);
+    setFixedSize(876, 600);
 }
 
 BitcoinGUI::~BitcoinGUI()
@@ -164,40 +185,40 @@ BitcoinGUI::~BitcoinGUI()
 
 void BitcoinGUI::createActions()
 {
-    QActionGroup *tabGroup = new QActionGroup(this);
+     QActionGroup *tabGroup = new QActionGroup(this);
 
-    overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
-    overviewAction->setStatusTip(tr("Show general overview of wallet"));
+    overviewAction = new QAction(QIcon(":icons/overview-cold"), tr(""), this);
+    //overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
-    overviewAction->setCheckable(true);
+    overviewAction->setCheckable(false);
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
     tabGroup->addAction(overviewAction);
 
-    sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&Send"), this);
-    sendCoinsAction->setStatusTip(tr("Send coins to a DigitalPrice address"));
+    sendCoinsAction = new QAction(QIcon(":icons/send-cold"), tr(""), this);
+    //sendCoinsAction->setStatusTip(tr("Send coins to a DigitalPrice address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
-    sendCoinsAction->setCheckable(true);
+    sendCoinsAction->setCheckable(false);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
     tabGroup->addAction(sendCoinsAction);
 
-    receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive"), this);
-    receiveCoinsAction->setStatusTip(tr("Show the list of addresses for receiving payments"));
+    receiveCoinsAction = new QAction(QIcon(":icons/receive-cold"), tr(""), this);
+    //receiveCoinsAction->setStatusTip(tr("Show the list of addresses for receiving payments"));
     receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
-    receiveCoinsAction->setCheckable(true);
+    receiveCoinsAction->setCheckable(false);
     receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
     tabGroup->addAction(receiveCoinsAction);
 
-    historyAction = new QAction(QIcon(":/icons/history"), tr("&Transactions"), this);
-    historyAction->setStatusTip(tr("Browse transaction history"));
+    historyAction = new QAction(QIcon(":icons/transactions-cold"), tr(""), this);
+    //historyAction->setStatusTip(tr("Browse transaction history"));
     historyAction->setToolTip(historyAction->statusTip());
-    historyAction->setCheckable(true);
+    historyAction->setCheckable(false);
     historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
     tabGroup->addAction(historyAction);
 
-    addressBookAction = new QAction(QIcon(":/icons/address-book"), tr("&Addresses"), this);
-    addressBookAction->setStatusTip(tr("Edit the list of stored addresses and labels"));
+    addressBookAction = new QAction(QIcon(":icons/addressbook-cold"), tr(""), this);
+    //addressBookAction->setStatusTip(tr("Edit the list of stored addresses and labels"));
     addressBookAction->setToolTip(addressBookAction->statusTip());
-    addressBookAction->setCheckable(true);
+    addressBookAction->setCheckable(false);
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
@@ -219,7 +240,7 @@ void BitcoinGUI::createActions()
     aboutAction = new QAction(QIcon(":/icons/bitcoin"), tr("&About DigitalPrice"), this);
     aboutAction->setStatusTip(tr("Show information about DigitalPrice"));
     aboutAction->setMenuRole(QAction::AboutRole);
-    aboutQtAction = new QAction(QIcon(":/trolltech/qmessagebox/images/qtlogo-64.png"), tr("About &Qt"), this);
+    aboutQtAction = new QAction(QIcon(":icons/qt"), tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show information about Qt"));
     aboutQtAction->setMenuRole(QAction::AboutQtRole);
     optionsAction = new QAction(QIcon(":/icons/options"), tr("&Options..."), this);
@@ -255,8 +276,36 @@ void BitcoinGUI::createActions()
     connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
 }
 
+void BitcoinGUI::createHeader(){
+    headerLayout = new QVBoxLayout();
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(0);
+
+    // Create application menu bar
+    createMenuBar();
+
+    headerLayout->addWidget(menuBarWidget);
+    headerLayout->addStretch();
+    headerLayout->addSpacing(1);
+
+    // Create info widget
+    createInfoWidget();
+
+    headerLayout->addWidget(infoWidget);
+    headerLayout->addStretch();
+
+    headerWidget = new QWidget();
+    headerWidget->setLayout(headerLayout);
+    setMenuWidget(headerWidget);
+}
+
 void BitcoinGUI::createMenuBar()
 {
+    menuBarWidget = new QWidget();
+
+    menuBarLayout = new QHBoxLayout();
+    menuBarLayout->setContentsMargins(0, 4, 3, 0);
+
 #ifdef Q_OS_MAC
     // Create a decoupled menu bar on Mac which stays even if the window is closed
     appMenuBar = new QMenuBar();
@@ -264,6 +313,12 @@ void BitcoinGUI::createMenuBar()
     // Get the main window's menu bar on other platforms
     appMenuBar = menuBar();
 #endif
+
+    /*appMenuBar->setStyleSheet("QMenuBar::item {background: transparent; color: white; font-size: 15px; font-style: bold; font-family: 'Magistral Bold'}"
+                              "QMenuBar::item:selected{background: #641d1e; color: white}");*/
+    appMenuBar->setStyleSheet("QMenuBar {background: transparent; color: white; font-size: 15px; font-style: bold; font-family: 'Magistral Bold'}"
+                               "QMenuBar::item:selected{background: #641d1e; color: white}"
+                              "QMenuBar::item{background: transparent}");
 
     // Configure the menus
     QMenu *file = appMenuBar->addMenu(tr("&File"));
@@ -284,17 +339,185 @@ void BitcoinGUI::createMenuBar()
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
+
+    menuBarLayout->addWidget(appMenuBar);
+    menuBarLayout->setAlignment(appMenuBar, Qt::AlignRight);
+
+    menuBarWidget->setLayout(menuBarLayout);
+    menuBarWidget->setStyleSheet("QWidget{background-image: url(:images/menu-background) top center no-repeat}");
+    menuBarWidget->setMinimumHeight(29);
+}
+
+void BitcoinGUI::createInfoWidget(){
+    infoWidget = new QWidget();
+    infoWidget->setStyleSheet("QWidget{background-image: url(:images/logo-background) top center no-repeat}");
+    infoWidget->setMinimumHeight(122);
+    infoWidget->setMaximumWidth(876);
+
+    infoLayout = new QHBoxLayout();
+
+    unconfirmedInfoLayout = new QVBoxLayout();
+    unconfirmedInfoLayout->setSpacing(0);
+
+    unconfirmedHeaderLabel = new QLabel();
+    unconfirmedHeaderLabel->setText("UNCONFIRMED");
+    unconfirmedHeaderLabel->setStyleSheet("QLabel{background: transparent; color: white; font-size: 20px; font-style: bold; font-family: 'Magistral Bold'}");
+    unconfirmedInfoLayout->addWidget(unconfirmedHeaderLabel);
+    unconfirmedInfoLayout->setAlignment(unconfirmedHeaderLabel, Qt::AlignLeft);
+
+    unconfirmedLayout = new QHBoxLayout();
+    /*unconfirmedLayout->addStretch(0);
+    unconfirmedLayout->addSpacing(0);*/
+
+    unconfirmedInfoLabel1 = new QLabel();
+    //unconfirmedInfoLabel1->setText("150.");
+    unconfirmedInfoLabel1->setStyleSheet("QLabel{background: transparent; color: white; font-size: 30px; font-style: bold; font-family: 'Magistral Bold'}");
+    unconfirmedLayout->addWidget(unconfirmedInfoLabel1);
+    //unconfirmedLayout->setAlignment(unconfirmedInfoLabel1, Qt::AlignBottom);
+
+    unconfirmedInfoLabel2 = new QLabel();
+    //unconfirmedInfoLabel2->setText("52795 DP");
+    unconfirmedInfoLabel2->setStyleSheet("QLabel{background: transparent; color: black; font-size: 15px; font-style: bold; font-family: 'Magistral Bold'}");
+    unconfirmedLayout->addWidget(unconfirmedInfoLabel2);
+    //unconfirmedLayout->setAlignment(unconfirmedInfoLabel2, Qt::AlignBottom);
+
+    unconfirmedInfoLayout->addLayout(unconfirmedLayout);
+    unconfirmedInfoLayout->setAlignment(unconfirmedLayout, Qt::AlignLeft);
+
+    infoLayout->addLayout(unconfirmedInfoLayout);
+    infoLayout->setAlignment(unconfirmedInfoLayout, Qt::AlignCenter);
+
+    balancedInfoLayout = new QVBoxLayout();
+    balancedInfoLayout->setSpacing(0);
+
+    balancedHeaderLabel = new QLabel();
+    balancedHeaderLabel->setText("BALANCE");
+    balancedHeaderLabel->setStyleSheet("QLabel{background: transparent; color: white; font-size: 20px; font-style: bold; font-family: 'Magistral Bold'}");
+    balancedInfoLayout->addWidget(balancedHeaderLabel);
+    balancedInfoLayout->setAlignment(balancedHeaderLabel, Qt::AlignLeft);
+
+    balancedLayout = new QHBoxLayout();
+    //balancedLayout->addStretch(0);
+   // balancedLayout->addSpacing(0);
+
+    balancedInfoLabel1 = new QLabel();
+    //balancedInfoLabel1->setText("1,750.");
+    balancedInfoLabel1->setStyleSheet("QLabel{background: transparent; color: white; font-size: 30px; font-style: bold; font-family: 'Magistral Bold'}");
+    balancedLayout->addWidget(balancedInfoLabel1);
+    // balancedLayout->setAlignment(balancedInfoLabel1, Qt::AlignBottom);
+
+    balancedInfoLabel2 = new QLabel();
+    //balancedInfoLabel2->setText("05543 DP");
+    balancedInfoLabel2->setStyleSheet("QLabel{background: transparent; color: black; font-size:15px; font-style: bold; font-family: 'Magistral Bold'}");
+    balancedLayout->addWidget(balancedInfoLabel2);
+    //balancedLayout->setAlignment(balancedInfoLabel2, Qt::AlignBottom);
+
+    balancedInfoLayout->addLayout(balancedLayout);
+    balancedInfoLayout->setAlignment(balancedLayout, Qt::AlignLeft);
+
+    infoLayout->addLayout(balancedInfoLayout);
+    infoLayout->setAlignment(balancedInfoLayout, Qt::AlignCenter);
+
+    infoLayout->addStretch(0);
+    infoLayout->setContentsMargins(430,0,0,0);
+    infoLayout->setSpacing(50);
+
+    infoWidget->setLayout(infoLayout);
 }
 
 void BitcoinGUI::createToolBars()
 {
-    QToolBar *toolbar = addToolBar(tr("Tabs toolbar"));
-    toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    toolbar->addAction(overviewAction);
-    toolbar->addAction(sendCoinsAction);
-    toolbar->addAction(receiveCoinsAction);
-    toolbar->addAction(historyAction);
-    toolbar->addAction(addressBookAction);
+    appToolBar = addToolBar(tr("Tabs toolbar"));
+    appToolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    appToolBar->setStyleSheet("QToolBar{background: #542728; border-color: white}");
+    appToolBar->setIconSize(QSize(162,51));
+    appToolBar->setContentsMargins(5, 0, 0 , -7);
+    appToolBar->setMinimumHeight(55);
+    appToolBar->setMaximumHeight(55);
+    appToolBar->setMovable(false);
+
+    QLabel *spacing = new QLabel();
+    spacing->setFixedWidth(13);
+    appToolBar->addWidget(spacing);
+
+    overWiewButton = new QToolButton();
+    overWiewButton->setIcon(QIcon(":icons/overview-cold"));
+    overWiewButton->setStyleSheet("QToolButton:hover{background: url(:icons/mouse-over) top center no-repeat; background-color: transparent}");
+    overWiewButton->setDefaultAction(overviewAction);
+    appToolBar->addWidget(overWiewButton);
+
+    sendButton = new QToolButton();
+    sendButton->setIcon(QIcon(":icons/send-cold"));
+    sendButton->setStyleSheet("QToolButton:hover{background: url(:icons/mouse-over) top center no-repeat; background-color: transparent}");
+    sendButton->setDefaultAction(sendCoinsAction);
+    appToolBar->addWidget(sendButton);
+
+    receiveButton = new QToolButton();
+    receiveButton->setIcon(QIcon(":icons/receive-cold"));
+    receiveButton->setStyleSheet("QToolButton:hover{background: url(:icons/mouse-over) top center no-repeat; background-color: transparent}");
+    receiveButton->setDefaultAction(receiveCoinsAction);
+    appToolBar->addWidget(receiveButton);
+
+    transactionsButton = new QToolButton();
+    transactionsButton->setIcon(QIcon(":icons/transactions-cold"));
+    transactionsButton->setStyleSheet("QToolButton:hover{background: url(:icons/mouse-over) top center no-repeat; background-color: transparent}");
+    transactionsButton->setDefaultAction(historyAction);
+    appToolBar->addWidget(transactionsButton);
+
+    addressBookButton = new QToolButton();
+    addressBookButton->setIcon(QIcon(":icons/addressbook-cold"));
+    addressBookButton->setStyleSheet("QToolButton:hover{background: url(:icons/mouse-over) top center no-repeat; background-color: transparent}");
+    addressBookButton->setDefaultAction(addressBookAction);
+    appToolBar->addWidget(addressBookButton);
+}
+
+void BitcoinGUI::controlVPN(){
+    QSettings settings;
+
+    if(settings.value("fUseProxy").toBool()){
+       return;
+    }
+
+    getVPNProxy();
+}
+
+void BitcoinGUI::getVPNProxy(){
+    CService addrProxy;
+
+    srand(time(NULL));
+    int state = rand()%3;
+    QSettings settings;
+
+    if(state == 0){
+        addrProxy = CService("216.170.126.53:3165", 9050);
+    }else if(state == 1){
+        addrProxy = CService("216.170.115.143:3165", 9050);
+    }else{
+        addrProxy = CService("23.95.88.128:3165", 9050);
+    }
+
+    settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
+    settings.setValue("nSocksVersion", 4);
+}
+
+void BitcoinGUI::setVPNToolTip(QString appProxy, QString socks){
+    QString line;
+    QString ip1 = "216.170.126.53:3165";
+    QString ip2 = "216.170.115.143:3165";
+    QString ip3 = "23.95.88.128:3165";
+    QString socks1 = "4";
+
+    if(appProxy == ip1 && socks == socks1){
+       line = "Connected with 'Buffalo, New York - Ipvanish' server.";
+    }else if(appProxy == ip2 && socks == socks1){
+       line = "Connected with 'Los Angeles, California - Privateinternetaccess' server.";
+    }else if(appProxy == ip3 && socks == socks1){
+       line = "Connected with 'Chicago, Illinois - Vyprvpn' server.";
+    }else{
+        line = "Subvpn passive.";
+    }
+
+    labelVPNIcon->setToolTip(line);
 }
 
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
@@ -474,27 +697,60 @@ void BitcoinGUI::aboutClicked()
 
 void BitcoinGUI::gotoOverviewPage()
 {
+    changeBackgroundImage(0);
     if (walletFrame) walletFrame->gotoOverviewPage();
 }
 
 void BitcoinGUI::gotoHistoryPage()
 {
+    changeBackgroundImage(3);
     if (walletFrame) walletFrame->gotoHistoryPage();
 }
 
 void BitcoinGUI::gotoAddressBookPage()
 {
+    changeBackgroundImage(4);
     if (walletFrame) walletFrame->gotoAddressBookPage();
 }
 
 void BitcoinGUI::gotoReceiveCoinsPage()
 {
+    changeBackgroundImage(2);
     if (walletFrame) walletFrame->gotoReceiveCoinsPage();
 }
 
 void BitcoinGUI::gotoSendCoinsPage(QString addr)
 {
+    changeBackgroundImage(1);
     if (walletFrame) walletFrame->gotoSendCoinsPage(addr);
+}
+
+void BitcoinGUI::changeBackgroundImage(int type){
+    if(type == 0){
+        overWiewButton->setIcon(QIcon(":icons/overview-hot"));
+    }else{
+        overWiewButton->setIcon(QIcon(":icons/overview-cold"));
+    }
+    if(type == 1){
+        sendButton->setIcon(QIcon(":icons/send-hot"));
+    }else{
+        sendButton->setIcon(QIcon(":icons/send-cold"));
+    }
+    if(type == 2){
+        receiveButton->setIcon(QIcon(":icons/receive-hot"));
+    }else{
+        receiveButton->setIcon(QIcon(":icons/receive-cold"));
+    }
+    if(type == 3){
+        transactionsButton->setIcon(QIcon(":icons/transactions-hot"));
+    }else{
+        transactionsButton->setIcon(QIcon(":icons/transactions-cold"));
+    }
+    if(type == 4){
+        addressBookButton->setIcon(QIcon(":icons/addressbook-hot"));
+    }else{
+        addressBookButton->setIcon(QIcon(":icons/addressbook-cold"));
+    }
 }
 
 void BitcoinGUI::gotoSignMessageTab(QString addr)
@@ -520,6 +776,84 @@ void BitcoinGUI::setNumConnections(int count)
     }
     labelConnectionsIcon->setPixmap(QIcon(icon).pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
     labelConnectionsIcon->setToolTip(tr("%n active connection(s) to DigitalPrice network", "", count));
+
+    QString state;
+    switch(count)
+    {
+    case 0: state = "0"; break;
+    case 1: case 2: case 3: state = "1"; break;
+    case 4: case 5: case 6: state = "1"; break;
+    case 7: case 8: case 9: state = "1"; break;
+    default: icon = "1"; break;
+    }
+
+    QSettings settings;
+    QString systemIP;
+    QString systemSocks;
+    QString line;
+
+    if(state == "0"){
+        if(settings.value("fUseProxy").toBool()){
+            if(settings.contains("addrProxy")){
+                systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
+                QString ip1 = "216.170.126.53:3165";
+                QString ip2 = "216.170.115.143:3165";
+                QString ip3 = "23.95.88.128:3165";
+
+                if(systemIP == ip1 || systemIP == ip2 || systemIP == ip3){
+                    if(settings.contains("nSocksVersion")){
+                        systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
+                        QString socks = "4";
+
+                        if(systemSocks == socks){
+                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+                            line = "Its trying to connect. If it takes long, please restart the wallet.";
+                        }else{
+                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+                            line = "Subvpn passive.";
+                        }
+                    }
+                }else{
+                    labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+                    line = "Subvpn passive.";
+                }
+            }
+        }else{
+            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+            line = "Its trying to connect. If it takes long, please restart the wallet.";
+        }
+        labelVPNIcon->setToolTip(line);
+    }else {
+        if(settings.value("fUseProxy").toBool()){
+            if(settings.contains("addrProxy")){
+                systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
+                QString ip1 = "216.170.126.53:3165";
+                QString ip2 = "216.170.115.143:3165";
+                QString ip3 = "23.95.88.128:3165";
+
+                if(systemIP == ip1 || systemIP == ip2 || systemIP == ip3){
+                    if(settings.contains("nSocksVersion")){
+                        systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
+                        QString socks = "4";
+
+                        if(systemSocks == socks){
+                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-active").pixmap(72,17));
+                        }else{
+                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+                        }
+                    }
+                }else{
+                    labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
+                }
+            }
+        }else{
+            systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
+            systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
+            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-active").pixmap(72,17));
+        }
+
+        setVPNToolTip(systemIP, systemSocks);
+    }
 }
 
 void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
@@ -566,8 +900,6 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         tooltip = tr("Up to date") + QString(".<br>") + tooltip;
         labelBlocksIcon->setPixmap(QIcon(":/icons/synced").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
 
-        walletFrame->showOutOfSyncWarning(false);
-
         progressBarLabel->setVisible(false);
         progressBar->setVisible(false);
     }
@@ -599,8 +931,6 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         if(count != prevBlocks)
             syncIconMovie->jumpToNextFrame();
         prevBlocks = count;
-
-        walletFrame->showOutOfSyncWarning(true);
 
         tooltip += QString("<br>");
         tooltip += tr("Last received block was generated %1 ago.").arg(timeBehindText);
@@ -836,4 +1166,30 @@ void BitcoinGUI::detectShutdown()
 {
     if (ShutdownRequested())
         QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
+}
+
+void BitcoinGUI::fillWalletModelInfo(WalletModel *walletModel){
+
+    int unit = walletModel->getOptionsModel()->getDisplayUnit();
+
+    QStringList slist;
+    QString unconfirmed = BitcoinUnits::formatWithUnit(unit, walletModel->getUnconfirmedBalance());
+    QString unconfirmed1;
+    QString unconfirmed2;
+    slist = unconfirmed.split(".");
+    unconfirmed1 = slist.at(0);
+    unconfirmed1 +=  ".";
+    unconfirmedInfoLabel1->setText(unconfirmed1);
+    unconfirmed2 = slist.at(1);
+    unconfirmedInfoLabel2->setText(unconfirmed2);
+
+    QString balance = BitcoinUnits::formatWithUnit(unit, walletModel->getBalance());
+    QString balance1;
+    QString balance2;
+    slist = balance.split(".");
+    balance1 = slist.at(0);
+    balance1 +=  ".";
+    balancedInfoLabel1->setText(balance1);
+    balance2 = slist.at(1);
+    balancedInfoLabel2->setText(balance2);
 }

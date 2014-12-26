@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 #include <QMap>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QToolButton>
 
 class TransactionTableModel;
 class WalletFrame;
@@ -60,6 +63,16 @@ public:
 
     void removeAllWallets();
 
+    void fillWalletModelInfo(WalletModel *walletModel);
+
+    void changeBackgroundImage(int type);
+
+    void controlVPN();
+
+    void getVPNProxy();
+
+    void setVPNToolTip(QString appProxy, QString socks);
+
     /** Used by WalletView to allow access to needed QActions */
     // Todo: Use Qt signals for these
     QAction * getOverviewAction() { return overviewAction; }
@@ -79,13 +92,40 @@ private:
     ClientModel *clientModel;
     WalletFrame *walletFrame;
 
+    QWidget *menuBarWidget;
+    QMenuBar *appMenuBar;
+    QHBoxLayout *menuBarLayout;
+    QVBoxLayout *headerLayout;
+    QWidget *headerWidget;
+    QWidget *infoWidget;
+    QHBoxLayout *infoLayout;
+    QToolBar *appToolBar;
+
+    QVBoxLayout *unconfirmedInfoLayout;
+    QHBoxLayout *unconfirmedLayout;
+    QLabel *unconfirmedHeaderLabel;
+    QLabel *unconfirmedInfoLabel1;
+    QLabel *unconfirmedInfoLabel2;
+
+    QVBoxLayout *balancedInfoLayout;
+    QHBoxLayout *balancedLayout;
+    QLabel *balancedHeaderLabel;
+    QLabel *balancedInfoLabel1;
+    QLabel *balancedInfoLabel2;
+
+    QToolButton *overWiewButton;
+    QToolButton *sendButton;
+    QToolButton *receiveButton;
+    QToolButton *transactionsButton;
+    QToolButton *addressBookButton;
+
     QLabel *labelEncryptionIcon;
     QLabel *labelConnectionsIcon;
     QLabel *labelBlocksIcon;
+    QLabel *labelVPNIcon;
     QLabel *progressBarLabel;
     QProgressBar *progressBar;
-
-    QMenuBar *appMenuBar;
+	
     QAction *overviewAction;
     QAction *historyAction;
     QAction *quitAction;
@@ -114,6 +154,10 @@ private:
 
     /** Create the main UI actions. */
     void createActions();
+    /** Create the menu header*/
+    void createHeader();
+    /** Create the info widget*/
+    void createInfoWidget();
     /** Create the menu bar and sub-menus. */
     void createMenuBar();
     /** Create the toolbars */
