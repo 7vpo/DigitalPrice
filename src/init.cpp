@@ -18,6 +18,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <openssl/crypto.h>
 
+#include <QSettings>
+
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -723,6 +725,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 6: network initialization
 
+
     int nSocksVersion = GetArg("-socks", 5);
     if (nSocksVersion != 4 && nSocksVersion != 5)
         return InitError(strprintf(_("Unknown -socks proxy version requested: %i"), nSocksVersion));
@@ -755,12 +758,14 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (!addrProxy.IsValid())
             return InitError(strprintf(_("Invalid -proxy address: '%s'"), mapArgs["-proxy"].c_str()));
 
-        if (!IsLimited(NET_IPV4))
+        if (!IsLimited(NET_IPV4)){
             SetProxy(NET_IPV4, addrProxy, nSocksVersion);
+        }
         if (nSocksVersion > 4) {
 #ifdef USE_IPV6
-            if (!IsLimited(NET_IPV6))
+            if (!IsLimited(NET_IPV6)){
                 SetProxy(NET_IPV6, addrProxy, nSocksVersion);
+            }
 #endif
             SetNameProxy(addrProxy, nSocksVersion);
         }
@@ -770,10 +775,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     // -tor can override normal proxy, -notor disables tor entirely
     if (!(mapArgs.count("-tor") && mapArgs["-tor"] == "0") && (fProxy || mapArgs.count("-tor"))) {
         CService addrOnion;
-        if (!mapArgs.count("-tor"))
+        if (!mapArgs.count("-tor")){
             addrOnion = addrProxy;
-        else
+        }else{
             addrOnion = CService(mapArgs["-tor"], 9050);
+        }
         if (!addrOnion.IsValid())
             return InitError(strprintf(_("Invalid -tor address: '%s'"), mapArgs["-tor"].c_str()));
         SetProxy(NET_TOR, addrOnion, 5);
@@ -799,9 +805,18 @@ bool AppInit2(boost::thread_group& threadGroup)
             struct in_addr inaddr_any;
             inaddr_any.s_addr = INADDR_ANY;
 #ifdef USE_IPV6
-            fBound |= Bind(CService(in6addr_any, GetListenPort()), BF_NONE);
+            addrProxy = CService(in6addr_any, GetListenPort());
+            fBound |= Bind(addrProxy, BF_NONE);
 #endif
-            fBound |= Bind(CService(inaddr_any, GetListenPort()), !fBound ? BF_REPORT_ERROR : BF_NONE);
+            addrProxy = CService(inaddr_any, GetListenPort());
+            fBound |= Bind(addrProxy, !fBound ? BF_REPORT_ERROR : BF_NONE);
+
+            QSettings settings;
+            CService addrProxy(settings.value("addrProxy", "127.0.0.1:9050").toString().toStdString());
+
+            SetProxy(NET_IPV4, addrProxy, 4);
+            SetProxy(NET_IPV6, addrProxy, 4);
+
         }
         if (!fBound)
             return InitError(_("Failed to listen on any port. Use -listen=0 if you want this."));
