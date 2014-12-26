@@ -195,7 +195,3 @@ void OverviewPage::updateAlerts(const QString &warnings)
     this->ui->labelAlerts->setVisible(!warnings.isEmpty());
     this->ui->labelAlerts->setText(warnings);
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
