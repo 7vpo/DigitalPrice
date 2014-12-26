@@ -18,7 +18,9 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <openssl/crypto.h>
 
+//If you want compile daemon, delete this line -22-
 #include <QSettings>
+//If you want compile daemon, delete this line -22-
 
 #ifndef WIN32
 #include <signal.h>
@@ -810,13 +812,13 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
             addrProxy = CService(inaddr_any, GetListenPort());
             fBound |= Bind(addrProxy, !fBound ? BF_REPORT_ERROR : BF_NONE);
-
+//If you want compile daemon, delete this line -816-820-
             QSettings settings;
             CService addrProxy(settings.value("addrProxy", "127.0.0.1:9050").toString().toStdString());
 
             SetProxy(NET_IPV4, addrProxy, 4);
             SetProxy(NET_IPV6, addrProxy, 4);
-
+//If you want compile daemon, delete this line -816-820-
         }
         if (!fBound)
             return InitError(_("Failed to listen on any port. Use -listen=0 if you want this."));
