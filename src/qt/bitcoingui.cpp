@@ -165,9 +165,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent) :
 
     // Initially wallet actions should be disabled
     setWalletActionsEnabled(false);
-
-    controlVPN();
-
+    
     setWindowFlags( (windowFlags() | Qt::CustomizeWindowHint) & ~Qt::WindowMaximizeButtonHint);
     setFixedSize(876, 600);
 }
@@ -471,55 +469,6 @@ void BitcoinGUI::createToolBars()
     appToolBar->addWidget(addressBookButton);
 }
 
-void BitcoinGUI::controlVPN(){
-    QSettings settings;
-
-    if(settings.value("fUseProxy").toBool()){
-       return;
-    }
-
-    getVPNProxy();
-}
-
-void BitcoinGUI::getVPNProxy(){
-    CService addrProxy;
-
-    srand(time(NULL));
-    int state = rand()%3;
-    QSettings settings;
-
-    if(state == 0){
-        addrProxy = CService("216.170.126.53:3165", 9050);
-    }else if(state == 1){
-        addrProxy = CService("216.170.115.143:3165", 9050);
-    }else{
-        addrProxy = CService("23.95.88.128:3165", 9050);
-    }
-
-    settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
-    settings.setValue("nSocksVersion", 4);
-}
-
-void BitcoinGUI::setVPNToolTip(QString appProxy, QString socks){
-    QString line;
-    QString ip1 = "216.170.126.53:3165";
-    QString ip2 = "216.170.115.143:3165";
-    QString ip3 = "23.95.88.128:3165";
-    QString socks1 = "4";
-
-    if(appProxy == ip1 && socks == socks1){
-       line = "Connected with 'Buffalo, New York - Ipvanish' server.";
-    }else if(appProxy == ip2 && socks == socks1){
-       line = "Connected with 'Los Angeles, California - Privateinternetaccess' server.";
-    }else if(appProxy == ip3 && socks == socks1){
-       line = "Connected with 'Chicago, Illinois - Vyprvpn' server.";
-    }else{
-        line = "Subvpn passive.";
-    }
-
-    labelVPNIcon->setToolTip(line);
-}
-
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
 {
     this->clientModel = clientModel;
@@ -606,7 +555,7 @@ void BitcoinGUI::createTrayIcon()
     trayIcon->show();
 #endif
 
-    notificator = new Notificator(QApplication::applicationName(), trayIcon);
+    notificator = new Notificator(QApplication::applicationName(), trayIcon, this);
 }
 
 void BitcoinGUI::createTrayIconMenu()
@@ -794,65 +743,16 @@ void BitcoinGUI::setNumConnections(int count)
 
     if(state == "0"){
         if(settings.value("fUseProxy").toBool()){
-            if(settings.contains("addrProxy")){
-                systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
-                QString ip1 = "216.170.126.53:3165";
-                QString ip2 = "216.170.115.143:3165";
-                QString ip3 = "23.95.88.128:3165";
-
-                if(systemIP == ip1 || systemIP == ip2 || systemIP == ip3){
-                    if(settings.contains("nSocksVersion")){
-                        systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
-                        QString socks = "4";
-
-                        if(systemSocks == socks){
-                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-                            line = "Its trying to connect. If it takes long, please restart the wallet.";
-                        }else{
-                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-                            line = "Subvpn passive.";
-                        }
-                    }
-                }else{
-                    labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-                    line = "Subvpn passive.";
-                }
-            }
-        }else{
             labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-            line = "Its trying to connect. If it takes long, please restart the wallet.";
+            line = "Its trying to connect. If it takes too long, please restart the wallet.";
         }
-        labelVPNIcon->setToolTip(line);
+// yes we have connections
     }else {
         if(settings.value("fUseProxy").toBool()){
-            if(settings.contains("addrProxy")){
-                systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
-                QString ip1 = "216.170.126.53:3165";
-                QString ip2 = "216.170.115.143:3165";
-                QString ip3 = "23.95.88.128:3165";
-
-                if(systemIP == ip1 || systemIP == ip2 || systemIP == ip3){
-                    if(settings.contains("nSocksVersion")){
-                        systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
-                        QString socks = "4";
-
-                        if(systemSocks == socks){
-                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-active").pixmap(72,17));
-                        }else{
-                            labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-                        }
-                    }
-                }else{
-                    labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-passive").pixmap(72,17));
-                }
-            }
-        }else{
-            systemIP = QString::fromStdString(settings.value("addrProxy").toString().toStdString());
-            systemSocks = QString::fromStdString(settings.value("nSocksVersion").toString().toStdString());
             labelVPNIcon->setPixmap(QIcon(":/icons/subvpn-active").pixmap(72,17));
+            line = "Connected to Proxy.";
         }
-
-        setVPNToolTip(systemIP, systemSocks);
+        labelVPNIcon->setToolTip(line);
     }
 }
 

@@ -12,7 +12,7 @@
 #include <QImageWriter>
 
 #ifdef USE_DBUS
-#include <QtDBus>
+#include <QtDBus/QtDBus>
 #include <stdint.h>
 #endif
 
@@ -21,10 +21,12 @@
 #include "macnotificationhandler.h"
 #endif
 
+#ifdef USE_DBUS
 // https://wiki.ubuntu.com/NotificationDevelopmentGuidelines recommends at least 128
 const int FREEDESKTOP_NOTIFICATION_ICON_SIZE = 128;
+#endif
 
-Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, QWidget *parent):
+Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, QWidget *parent) :
     QObject(parent),
     parent(parent),
     programName(programName),
@@ -40,7 +42,7 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
     }
 #ifdef USE_DBUS
     interface = new QDBusInterface("org.freedesktop.Notifications",
-          "/org/freedesktop/Notifications", "org.freedesktop.Notifications");
+        "/org/freedesktop/Notifications", "org.freedesktop.Notifications");
     if(interface->isValid())
     {
         mode = Freedesktop;
@@ -48,25 +50,25 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
 #endif
 #ifdef Q_OS_MAC
     // check if users OS has support for NSUserNotification
-    if( MacNotificationHandler::instance()->hasUserNotificationCenterSupport()) {
-        mode = UserNotificationCenter;
-    }
-    else {
-        // Check if Growl is installed (based on Qt's tray icon implementation)
-        CFURLRef cfurl;
-        OSStatus status = LSGetApplicationForInfo(kLSUnknownType, kLSUnknownCreator, CFSTR("growlTicket"), kLSRolesAll, 0, &cfurl);
-        if (status != kLSApplicationNotFoundErr) {
-            CFBundleRef bundle = CFBundleCreate(0, cfurl);
-            if (CFStringCompare(CFBundleGetIdentifier(bundle), CFSTR("com.Growl.GrowlHelperApp"), kCFCompareCaseInsensitive | kCFCompareBackwards) == kCFCompareEqualTo) {
-                if (CFStringHasSuffix(CFURLGetString(cfurl), CFSTR("/Growl.app/")))
-                    mode = Growl13;
-                else
-                    mode = Growl12;
-            }
-            CFRelease(cfurl);
-            CFRelease(bundle);
+        if(MacNotificationHandler::instance()->hasUserNotificationCenterSupport()) {
+            mode = UserNotificationCenter;
         }
-    }
+        else {
+            // Check if Growl is installed (based on Qt's tray icon implementation)
+            CFURLRef cfurl;
+            OSStatus status = LSGetApplicationForInfo(kLSUnknownType, kLSUnknownCreator, CFSTR("growlTicket"), kLSRolesAll, 0, &cfurl);
+            if (status != kLSApplicationNotFoundErr) {
+                CFBundleRef bundle = CFBundleCreate(0, cfurl);
+                if (CFStringCompare(CFBundleGetIdentifier(bundle), CFSTR("com.Growl.GrowlHelperApp"), kCFCompareCaseInsensitive | kCFCompareBackwards) == kCFCompareEqualTo) {
+                    if (CFStringHasSuffix(CFURLGetString(cfurl), CFSTR("/Growl.app/")))
+                        mode = Growl13;
+                    else
+                        mode = Growl12;
+                }
+                CFRelease(cfurl);
+                CFRelease(bundle);
+            }
+        }
 #endif
 }
 
@@ -282,7 +284,6 @@ void Notificator::notifyMacUserNotificationCenter(Class cls, const QString &titl
     // icon is not supported by the user notification center yet. OSX will use the app icon.
     MacNotificationHandler::instance()->showNotification(title, text);
 }
-
 #endif
 
 void Notificator::notify(Class cls, const QString &title, const QString &text, const QIcon &icon, int millisTimeout)
