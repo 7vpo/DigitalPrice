@@ -67,12 +67,6 @@ public:
 
     void changeBackgroundImage(int type);
 
-    void controlVPN();
-
-    void getVPNProxy();
-
-    void setVPNToolTip(QString appProxy, QString socks);
-
     /** Used by WalletView to allow access to needed QActions */
     // Todo: Use Qt signals for these
     QAction * getOverviewAction() { return overviewAction; }

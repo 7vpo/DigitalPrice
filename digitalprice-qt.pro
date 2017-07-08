@@ -1,7 +1,7 @@
 TEMPLATE = app
 TARGET = DigitalPrice-qt
 macx:TARGET = "DigitalPrice-Qt"
-VERSION = 0.9.0.0
+VERSION = 0.9.3.2
 INCLUDEPATH += src src/json src/qt
 QT += core gui network
 
